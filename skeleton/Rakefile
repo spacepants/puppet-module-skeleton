@@ -16,7 +16,10 @@ begin
 rescue LoadError # rubocop:disable Lint/HandleExceptions
 end
 
-RuboCop::RakeTask.new
+RuboCop::RakeTask.new(:rubocop) do |task|
+  # These make the rubocop experience maybe slightly less terrible
+  task.options = ['-D', '-S', '-E', '-d']
+end
 
 exclude_paths = [
   "bundle/**/*",
@@ -53,11 +56,16 @@ task :contributors do
   system("git log --format='%aN' | sort -u > CONTRIBUTORS")
 end
 
-desc "Run syntax, lint, and spec tests."
-task :test => [
+test_tasks = [
   :metadata_lint,
   :syntax,
   :lint,
   :rubocop,
   :spec,
 ]
+
+if Puppet.version.to_f <= 3.8
+  test_tasks.delete(:rubocop)
+end
+desc "Run syntax, lint, and spec tests."
+task :test => test_tasks
